@@ -6,6 +6,7 @@ SUBDIRS = \
     src/postgresql \
     src/replicate \
     src/sqlite \
+    src/cassandra \
     src/oracle \
     include \
     demo \

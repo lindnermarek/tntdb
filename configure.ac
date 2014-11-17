@@ -212,6 +212,24 @@ AS_IF([test "$with_sqlite" = yes],
 AM_CONDITIONAL(MAKE_SQLITE, test "$with_sqlite" = yes)
 
 #
+# Cassandra
+#
+
+AC_ARG_WITH(
+  [cassandra],
+  AS_HELP_STRING([--with-cassandra],
+                 [build cassandra-driver (default: no)]),
+  [with_cassandra=$withval],
+  [with_cassandra=no])
+
+AS_IF([test "$with_cassandra" = yes],
+[
+  AC_CHECK_HEADER([cassandra.h], , AC_MSG_ERROR([header for cassandra not found]))
+])
+
+AM_CONDITIONAL(MAKE_CASSANDRA, test "$with_cassandra" = yes)
+
+#
 # Oracle
 #
 AX_LIB_ORACLE_OCI([8.0])
@@ -288,6 +306,7 @@ AC_CONFIG_FILES([
   src/postgresql/Makefile
   src/replicate/Makefile
   src/sqlite/Makefile
+  src/cassandra/Makefile
   src/oracle/Makefile
   test/Makefile
   ])
