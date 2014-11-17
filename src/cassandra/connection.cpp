@@ -27,7 +27,7 @@
  */
 
 #include <tntdb/cassandra/impl/connection.h>
-#include <tntdb/cassandra/impl/statement.h>
+//#include <tntdb/cassandra/impl/statement.h>
 #include <tntdb/impl/row.h>
 #include <tntdb/impl/value.h>
 #include <tntdb/impl/result.h>
@@ -45,8 +45,13 @@ namespace tntdb
   namespace cassandra
   {
     Connection::Connection(const char* conninfo)
-      : transactionActive(0)
     {
+
+//      CassFuture* connect_future = NULL;
+//      CassCluster* cluster = cass_cluster_new();
+//      cass_cluster_set_contact_points(cluster, "127.0.0.1,127.0.0.2,127.0.0.3");
+
+/*
       log_debug("cassandra_open(\"" << conninfo << "\")");
       int errcode = ::cassandra_open(conninfo, &db);
 
@@ -59,104 +64,19 @@ namespace tntdb
       errcode = ::cassandra_busy_timeout(db, 60000);
       if (errcode != CASS)
         throw Execerror("cassandra_busy_timeout", db, errcode);
+    */
     }
 
     Connection::~Connection()
     {
+      /*
       if (db)
       {
         clearStatementCache();
 
         log_debug("cassandra_close(" << db << ")");
         ::cassandra_close(db);
-      }
+      }*/
     }
-
-    void Connection::beginTransaction()
-    {
-      if (transactionActive == 0)
-        execute("BEGIN IMMEDIATE TRANSACTION");
-      ++transactionActive;
-    }
-
-    void Connection::commitTransaction()
-    {
-      if (transactionActive == 0 || --transactionActive == 0)
-      {
-        // Statement handles are invalidated at transaction end, therefore we
-        // release all cached statements here.
-        // The problem still remains since the application might preserve a
-        // statement handle, which can't be released here.
-        clearStatementCache();
-        execute("COMMIT TRANSACTION");
-      }
-    }
-
-    void Connection::rollbackTransaction()
-    {
-      if (transactionActive == 0 || --transactionActive == 0)
-      {
-        // Statement handles are invalidated at transaction end, therefore we
-        // release all cached statements here.
-        // The problem still remains since the application might preserve a
-        // statement handle, which can't be released here.
-        clearStatementCache();
-        execute("ROLLBACK TRANSACTION");
-      }
-    }
-
-    Connection::size_type Connection::execute(const std::string& query)
-    {
-      char* errmsg;
-
-      log_debug("cassandra_exec(" << db << ", \"" << query << "\", 0, 0, " << &errmsg << ')');
-
-      int ret = ::cassandra_exec(db, query.c_str(), 0, 0, &errmsg);
-
-      log_debug("cassandra_exec ret=" << ret);
-
-      if (ret != CASS_OK)
-        throw Execerror("cassandra_exec", ret, errmsg, true);
-
-      return ::cassandra_changes(db);
-    }
-
-    tntdb::Result Connection::select(const std::string& query)
-    {
-      return prepare(query).select();
-    }
-
-    tntdb::Row Connection::selectRow(const std::string& query)
-    {
-      return prepare(query).selectRow();
-    }
-
-    tntdb::Value Connection::selectValue(const std::string& query)
-    {
-      return prepare(query).selectValue();
-    }
-
-    tntdb::Statement Connection::prepare(const std::string& query)
-    {
-      log_debug("prepare(\"" << query << "\")");
-      return tntdb::Statement(new Statement(this, query));
-    }
-
-    bool Connection::ping()
-    {
-      return db != 0;
-    }
-
-    long Connection::lastInsertId(const std::string& name)
-    {
-      return static_cast<int>(cassandra_last_insert_rowid(db));
-    }
-
-    void Connection::lockTable(const std::string& tablename, bool exclusive)
-    {
-      // nothing to do - the database is locked by the exclusive transaction
-      // already
-    }
-
   }
 }
